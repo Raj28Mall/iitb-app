@@ -1,8 +1,6 @@
-import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from firebase_admin import credentials, firestore, initialize_app
-
+from app.db.session import db
 app = FastAPI() 
 
 # Allow CORS for all origins
@@ -13,25 +11,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
 )
-
-SERVICE_ACCOUNT_KEY_PATH = "serviceAccountKey.json" 
-
-if not os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
-    raise FileNotFoundError(
-        f"Service account key file not found at: {SERVICE_ACCOUNT_KEY_PATH}\n"
-        "Please download it from Firebase Console > Project settings > Service accounts > Generate new private key."
-    )
-
-try:
-    cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-    initialize_app(cred)
-    print("Firebase Admin SDK initialized successfully!")
-except Exception as e:
-    print(f"Error initializing Firebase Admin SDK: {e}")
-    # Handle more gracefully in production
-    exit(1)
-
-db = firestore.client()
 
 @app.get("/")
 def test():
