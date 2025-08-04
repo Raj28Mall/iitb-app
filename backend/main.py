@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from app.db.session import db
+from google.cloud.firestore_v1.client import Client
+from google.api_core.exceptions import GoogleAPICallError
+from app.api.deps import get_db
+from app.api.v1.endpoints.courses import router as courses_router
+
 app = FastAPI() 
 
 # Allow CORS for all origins
@@ -16,30 +20,31 @@ app.add_middleware(
 def test():
     return {"message": "Hello World"}
 
-@app.post("/add_document/{collection_name}")
-async def add_document(collection_name: str, data: dict):
+@app.get("/health", tags=["System"])
+def health_check(db: Client = Depends(get_db)):
     """
-    Adds a new document to the specified Firestore collection.
-    Example: POST to /add_document/my_important_docs with JSON body:
-             {"title": "My First Doc", "content": "This is important info."}
-    """
-    try:
-        doc_ref = db.collection(collection_name).add(data)
-        return {"message": "Document added successfully!", "document_id": doc_ref[1].id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to add document: {e}")
-
-@app.get("/get_documents/{collection_name}")
-async def get_documents(collection_name: str):
-    """
-    Retrieves all documents from the specified Firestore collection.
-    Example: GET from /get_documents/my_important_docs
+    Performs a health check of the API and its connection to the database.
+    Returns a 200 OK status if healthy, otherwise a 503 Service Unavailable.
     """
     try:
-        docs = db.collection(collection_name).stream()
-        results = []
-        for doc in docs:
-            results.append({"id": doc.id, **doc.to_dict()})
-        return {"collection": collection_name, "documents": results}
+        # Perform a simple, low-cost read operation on the database.
+        # We try to get a document that doesn't exist to confirm connectivity
+        # without retrieving any data.
+        db.collection("health_check").document("ping").get(timeout=5)
+        
+        return {"status": "ok", "database": "healthy"}
+    
+    except GoogleAPICallError as e:
+        # This catches issues like permissions, network problems, etc.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "error", "database": "unhealthy", "reason": str(e)},
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve documents: {e}")
+        # Catch any other unexpected errors
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "error", "database": "unhealthy", "reason": str(e)},
+        )
+    
+app.include_router(courses_router, prefix="/api/v1", tags=["Courses"])

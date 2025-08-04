@@ -22,19 +22,21 @@ jobs:
           cache: 'poetry'
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: '1.8.2'
 
       - name: Install dependencies
         working-directory: backend
         run: poetry install --no-interaction --no-root
 
       - name: Run Ruff (Linting)
-        run: poetry run ruff check backend/
+        working-directory: backend
+        run: poetry run ruff check .
 
       - name: Run Ruff Format Check
-        run: poetry run ruff format backend/ --check 
+        working-directory: backend
+        run: poetry run ruff format . --check
 
       - name: Run Pytest
         working-directory: backend

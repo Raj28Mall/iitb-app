@@ -1,6 +1,6 @@
 import os
 from firebase_admin import credentials, firestore, initialize_app
-from ..core.config import config
+from app.core.config import config
 
 service_account_key_path= config.SERVICE_ACCOUNT_KEY_PATH
 
