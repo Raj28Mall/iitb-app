@@ -18,7 +18,14 @@ class Course(BaseModel):
     """Course model for representing course data"""
     id: str
     name: str
-    code: Optional[str] = None
+    code: str
     type: str
     department_id: str
-    slot: List[str] # I dont know if this is the best
+    slot: str
+class CourseCreate(BaseModel):
+    """Course creation model"""
+    name: str
+    code: str
+    type: str
+    department_id: str
+    slot: str

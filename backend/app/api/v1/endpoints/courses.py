@@ -64,3 +64,17 @@ async def get_courses_by_department(department_id: str) -> List[Course]:
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve courses for department: {department_id} {e}")
+    
+# TODO: Figure out what to use, department id or department name
+@router.post("/courses", response_model=Course)
+async def create_course(course: Course) -> Course:
+    """
+    Creates a new course in the database.
+    """
+    collection_name = "courses"
+    try:
+        doc_ref = db.collection(collection_name)
+        _, doc_ref = doc_ref.add(course.dict())
+        return course
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create course: {e}")

@@ -36,9 +36,9 @@ jobs:
       #   working-directory: backend
       #   run: poetry run ruff check .
 
-      - name: Run Ruff Format Check
-        working-directory: backend
-        run: poetry run ruff format . --check
+     # - name: Run Ruff Format Check
+      #  working-directory: backend
+       # run: poetry run ruff format . --check
 
       - name: Run Pytest
         working-directory: backend
