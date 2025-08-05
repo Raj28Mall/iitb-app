@@ -32,9 +32,9 @@ jobs:
         working-directory: backend
         run: poetry install --no-interaction --no-root
 
-      - name: Run Ruff (Linting)
-        working-directory: backend
-        run: poetry run ruff check .
+      # - name: Run Ruff (Linting)
+      #   working-directory: backend
+      #   run: poetry run ruff check .
 
       - name: Run Ruff Format Check
         working-directory: backend

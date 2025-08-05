@@ -1,5 +1,10 @@
-def test_placeholder():
-    """Placeholder test that always passes."""
-    assert True
+def test_db_health(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    result = response.json()
+    assert "status" in result
+    assert "database" in result
+    assert result["status"] == "ok"
+    assert result["database"] == "healthy"
 
 
