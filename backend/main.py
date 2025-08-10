@@ -20,8 +20,8 @@ app.add_middleware(
 def test():
     return {"message": "Hello World"}
 
-@app.get("/health", tags=["System"])
-def health_check(db: Client = Depends(get_db)):
+# @app.get("/health", tags=["System"])
+# def health_check(db: Client = Depends(get_db)):
     """
     Performs a health check of the API and its connection to the database.
     Returns a 200 OK status if healthy, otherwise a 503 Service Unavailable.

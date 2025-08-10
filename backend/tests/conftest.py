@@ -1,29 +1,27 @@
+import sys
+import types
+from unittest.mock import Mock
 import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
 
-# Make sure this import points to your main FastAPI application instance
-from main import app 
+fake_fb = types.ModuleType("firebase_admin")
+fake_credentials = types.ModuleType("firebase_admin.credentials")
+fake_firestore = types.ModuleType("firebase_admin.firestore")
 
-@pytest.fixture(autouse=True)
-def mock_firebase_admin():
-    """
-    Mocks the Firebase Admin SDK for all tests.
-    """
-    with patch('app.db.session.credentials.Certificate') as mock_cert, \
-         patch('app.db.session.initialize_app') as mock_init, \
-         patch('app.db.session.firestore.client') as mock_firestore_client:
-        
-        mock_db = Mock()
-        mock_firestore_client.return_value = mock_db
-        yield mock_db
+mock_db = Mock(name="firestore_db")
+setattr(fake_credentials, "Certificate", Mock(name="Certificate"))
+setattr(fake_firestore, "client", Mock(name="firestore.client", return_value=mock_db))
 
-# ADD THIS FIXTURE
+setattr(fake_fb, "credentials", fake_credentials)
+setattr(fake_fb, "firestore", fake_firestore)
+fake_fb.__dict__["initialize_app"] = Mock(name="initialize_app")
+fake_fb.__dict__['_apps'] = [] 
+sys.modules["firebase_admin"] = fake_fb
+sys.modules["firebase_admin.credentials"] = fake_credentials
+sys.modules["firebase_admin.firestore"] = fake_firestore
+
 @pytest.fixture(scope="module")
 def client():
-    """
-    Provides a TestClient instance for the FastAPI app.
-    It's created once per test module.
-    """
+    from main import app
+    from fastapi.testclient import TestClient
     with TestClient(app) as c:
         yield c

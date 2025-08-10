@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import Any, Dict, List
 from pydantic import ValidationError
 # from google.cloud.firestore_v1.client import Client
 from app.db.session import db
@@ -35,46 +35,28 @@ async def get_departments() -> List[Department]:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve departments: {e}")
 
 
-@router.get("/courses/{department_id}", response_model=List[Course])
-async def get_courses_by_department(department_id: str) -> List[Course]:
+@router.get("/courses/", response_model=List[Course])
+async def get_courses() -> List[Course]:
     """
-    Retrieves courses for a specific department by its id.
+    Retrieves all running courses for the current sem
     """
     collection_name = "courses"
     try:
-        # Filter courses by department_id
-        docs = db.collection(collection_name).where("department_id", "==", department_id).stream()
-        results = []
+        docs = db.collection(collection_name).stream()
+        results: list[Course] = []
         for doc in docs:
-            doc_data = doc.to_dict()
+            data: Dict[str, Any] = (doc.to_dict() or {})
             try:
-                course = Course(
-                    id=doc.id,
-                    name=doc_data.get('name'),
-                    code=doc_data.get('code'),
-                    type=doc_data.get('type', ''), 
-                    department_id=doc_data.get('department_id', ''),  
-                    slot=doc_data.get('slot', []) 
-                )
+                course = Course(id=doc.id, **data) if 'id' in Course.model_fields else Course(**data)
                 results.append(course)
             except ValidationError as ve:
                 print(f"Validation error for document {doc.id}: {ve}")
                 continue
-                
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve courses for department: {department_id} {e}")
-    
-# TODO: Figure out what to use, department id or department name
-@router.post("/courses", response_model=Course)
-async def create_course(course: Course) -> Course:
-    """
-    Creates a new course in the database.
-    """
-    collection_name = "courses"
-    try:
-        doc_ref = db.collection(collection_name)
-        _, doc_ref = doc_ref.add(course.dict())
-        return course
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create course: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve courses for department: {e}")
+
+@router.get("/courses/{department_code}", response_model=List[Course])
+async def get_courses_for_department(department_code: str) -> List[Course]:
+    """Returns the core courses running for the given department"""
+    return []
