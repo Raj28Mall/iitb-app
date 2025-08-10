@@ -54,7 +54,7 @@ def scrape_course_data(html_content):
                 
                 slot_details = slot_details.split('\n')[0]
                 
-                if not slot_details:
+                if not slot_details or slot_details == "X":
                     #Skipping cause no slot details (Maybe i shouldnt be skipping, rather keep it and later update when get to know the slot)
                     continue
 
@@ -97,20 +97,20 @@ def load_and_scrape_html_file(file_path):
         return []
 
 if __name__ == "__main__":
-    departments =["chemical", "electrical", "metallurgy", "civil", "computer_science", "aerospace", "economics", "energy"]
-    # departments =["aerospace"]
+    
+    departments =["chemical", "electrical", "metallurgy", "civil", "computer_science", "aerospace", "economics", "energy", "digital_health", "data_science", "ent", "ieor", "environmental", "math", "mechanical", "physics", "chemistry", "biology", "climate_studies", "educational_tech", "gnr", "earth_sciences", "humanities", "idc", "management", "syscon", "policy_studies", "technology_alternatives", "liberal_education"]
+
     for branch in departments:
-        html_file_path = os.path.join(os.path.dirname(__file__), f"department_data/{branch}.html")
+        html_file_path = os.path.join(os.path.dirname(__file__), f"department_data_raw/{branch}.html")
         
         courses = load_and_scrape_html_file(html_file_path)
         
         if courses:
-            print(f"Found {len(courses)} courses for {branch}")
-            
             # print(courses[0])
             df = pd.DataFrame(courses, index=None)
             df = df.drop_duplicates(subset=['course_code'])
+            print(f"Found {len(df)} courses for {branch}")
             # Optionally save to CSV
-            df.to_csv(os.path.join(os.path.dirname(__file__), f"{branch}_data.csv"), index=False)
+            df.to_csv(os.path.join(os.path.dirname(__file__), f"department_data_processed/{branch}_data.csv"), index=False)
         else:
             print("No course data found.")

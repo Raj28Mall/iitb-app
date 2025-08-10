@@ -8,3 +8,8 @@ class Config:
         self.SERVICE_ACCOUNT_KEY_PATH = os.getenv("SERVICE_ACCOUNT_KEY_PATH")
 
 config= Config()
+
+#validator
+#cleaner
+#read files
+#upload files

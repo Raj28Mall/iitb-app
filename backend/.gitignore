@@ -185,3 +185,6 @@ static/files/
 config.ini
 settings.ini
 secrets.json
+
+department_data_raw/
+department_data_processed/
