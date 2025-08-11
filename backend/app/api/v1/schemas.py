@@ -23,8 +23,7 @@ class Course(BaseModel):
     slot: str
 class CourseCreate(BaseModel):
     """Course creation model"""
-    name: str
-    code: str
-    type: str
-    department_id: str
+    course_name: str
+    course_code: str
+    course_type: str
     slot: str

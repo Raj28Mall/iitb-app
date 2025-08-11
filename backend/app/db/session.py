@@ -1,5 +1,6 @@
 import os
 from firebase_admin import credentials, firestore, initialize_app
+from google.cloud.firestore_v1 import AsyncClient
 from app.core.config import config
 
 service_account_key_path= config.SERVICE_ACCOUNT_KEY_PATH

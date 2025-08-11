@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
 from typing import Any, Dict, List
 from pydantic import ValidationError
+import asyncio
 # from google.cloud.firestore_v1.client import Client
 from app.db.session import db
 from app.api.v1.schemas import Department, Course
+from app.services.department_course_scraper import departments_names_to_codes
 
 router = APIRouter()
 
@@ -56,7 +58,52 @@ async def get_courses() -> List[Course]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve courses for department: {e}")
 
-@router.get("/courses/{department_code}", response_model=List[Course])
-async def get_courses_for_department(department_code: str) -> List[Course]:
+@router.get("/courses/{department_code}/{semester}", response_model=List[str])
+async def get_courses_for_department(department_code: str, semester: int, response: Response) -> List[str] | str:
     """Returns the core courses running for the given department"""
-    return []
+    if semester < 1 or semester > 8:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return "Invalid semester"
+    
+    available_departments = await get_departments()
+    for department in available_departments:
+        if department.code == department_code:
+            doc_ref = db.collection('department_courses').document(department.name)
+            doc = (doc_ref.get()).to_dict()
+            if doc:
+                courses = doc.get(str(semester), [])
+                if courses:
+                    response.status_code = status.HTTP_200_OK
+                else:
+                    response.status_code = status.HTTP_204_NO_CONTENT
+                return courses
+            else:
+                response.status_code = status.HTTP_400_BAD_REQUEST
+                return f"No courses found for department: {department_code} in semester {semester}"
+    
+    response.status_code = status.HTTP_400_BAD_REQUEST
+    return "Invalid department code"
+    
+async def get_all_department_data():
+    """Fetches all data from the department_courses collection."""
+    all_department_courses = {}
+    try:
+        docs = db.collection('department_courses').stream()
+                
+        for doc in docs:
+            # doc.id is the department name (e.g., "Civil Engineering")
+            all_department_courses[doc.id] = doc.to_dict()
+        
+        print(f"✅ Successfully fetched {len(all_department_courses)} departments.")
+        return all_department_courses
+    except Exception as e:
+        print(f"🔥 An error occurred: {e}")
+        return None
+
+# async def print_available_departments():
+#     available_departments = await get_departments()
+#     print(f"Available Departments: {(available_departments[0]).name}")
+    
+# if __name__ == "__main__":
+    # asyncio.run(print_available_departments())
+    # pass
