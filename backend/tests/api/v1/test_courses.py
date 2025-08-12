@@ -1,7 +1,7 @@
 import pytest
 
-@pytest.mark.skip(reason="This is a placeholder for a future health check.")
-def test_db_health(client):
+# @pytest.mark.skip(reason="This is a placeholder for a future health check.")
+def db_health(client):
     response = client.get("/health")
     assert response.status_code == 200
     result = response.json()
