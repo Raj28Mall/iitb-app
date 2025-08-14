@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException
 from typing import Any, Dict, List
 from pydantic import ValidationError
 import asyncio
@@ -59,11 +59,10 @@ async def get_courses() -> List[Course]:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve courses for department: {e}")
 
 @router.get("/courses/{department_code}/{semester}", response_model=List[str])
-async def get_courses_for_department(department_code: str, semester: int, response: Response) -> List[str] | str:
+async def get_courses_for_department(department_code: str, semester: int) -> List[str] | str:
     """Returns the core courses running for the given department"""
     if semester < 1 or semester > 8:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return "Invalid semester"
+        raise HTTPException(status_code=400, detail="Invalid semester")
     
     available_departments = await get_departments()
     for department in available_departments:
@@ -72,17 +71,11 @@ async def get_courses_for_department(department_code: str, semester: int, respon
             doc = (doc_ref.get()).to_dict()
             if doc:
                 courses = doc.get(str(semester), [])
-                if courses:
-                    response.status_code = status.HTTP_200_OK
-                else:
-                    response.status_code = status.HTTP_204_NO_CONTENT
-                return courses
+                return courses 
             else:
-                response.status_code = status.HTTP_400_BAD_REQUEST
-                return f"No courses found for department: {department_code} in semester {semester}"
+                raise HTTPException(status_code=404, detail=f"No courses found for department: {department_code} in semester {semester}")
     
-    response.status_code = status.HTTP_400_BAD_REQUEST
-    return "Invalid department code"
+    raise HTTPException(status_code=400, detail="Invalid department code")
     
 async def get_all_department_data():
     """Fetches all data from the department_courses collection."""

@@ -173,7 +173,7 @@ def uploadDataToFireStore(departments_data, semesters):
 
 
 if __name__ == "__main__":
-    semesters= [1,  2, 3, 4, 5, 6, 7, 8]
+    semesters= [1, 2, 3, 4, 5, 6, 7, 8]
     # semesters= [1]
 
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

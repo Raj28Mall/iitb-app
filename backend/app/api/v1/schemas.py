@@ -11,14 +11,14 @@ class Department(BaseModel):
 class DepartmentCreate(BaseModel):
     """Department creation model"""
     name: str
-    code: Optional[str] = None
+    code: str = Field(pattern=r"^[A-Z]{2}$")
     description: Optional[str] = None
 
 class Course(BaseModel):
     """Course model for representing course data"""
     id: str
     course_name: str
-    course_code: str=  Field(pattern=r"^(?:[A-Z]{2} \d{3}|[A-Z]{2}\d{4})$")
+    course_code: str = Field(pattern=r"^(?:[A-Z]{2} \d{3}|[A-Z]{3}\d{3}|[A-Z]{2}\d{4})$")
     course_type: Literal["Theory", "Lab"]
     slot: str
     
@@ -30,8 +30,8 @@ class Course(BaseModel):
         
         if course_type == "Theory":
             # Theory courses: slots 1-14
-            if not (slot.isdigit() and 1 <= int(slot) <= 14):
-                raise ValueError(f"Theory courses must have slots 1-14, got '{slot}'")
+            if not (slot.isdigit() and 1 <= int(slot) <= 15):
+                raise ValueError(f"Theory courses must have slots 1-15, got '{slot}'")
         elif course_type == "Lab":
             # Lab courses: slots L1-L6
             if not (slot.startswith('L') and len(slot) == 2 and 
