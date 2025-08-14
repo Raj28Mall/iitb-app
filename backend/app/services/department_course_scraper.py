@@ -13,13 +13,33 @@ departments_names_to_codes = {
     "Energy Science and Engineering": "EN",
     "Engineering Physics": "EP",
     "Metallurgical Engineering and Materials Science": "MM",
-    "Physics": "PH",
+    # "Physics": "PH",
     "Environmental Science and Engineering":"ES",
     "Mechanical Engineering":"ME",
     "Industrial Engineering and Operations Research":"IE",
     "Economics":"EC",
     "Chemistry":"CH",
     "Mathematics":"MA"
+}
+
+departments_to_skip = ["Physics", "Humanities and Social Sciences", "Centre for Liberal Education (CLEdu)"]
+
+departments_names_to_divisions={
+    "Chemical Engineering": "D4", 
+    "Aerospace Engineering": "D2",
+    "Civil Engineering": "D2",
+    "Computer Science and Engineering": "D3",
+    "Electrical Engineering": "D4",
+    "Energy Science and Engineering": "D1",
+    "Engineering Physics": "D2",
+    "Metallurgical Engineering and Materials Science": "D3",
+    # "Physics": "PH",
+    "Environmental Science and Engineering":"D1",
+    "Mechanical Engineering":"D1",
+    "Industrial Engineering and Operations Research":"D2",
+    "Economics":"D3",
+    "Chemistry":"D1",
+    "Mathematics":"D1"
 }
 
 def scrape_course_data(html_content, isFirstYear):
@@ -42,6 +62,7 @@ def scrape_course_data(html_content, isFirstYear):
     
     DEPARTMENT_COLUMN_INDEX = 4
     CODE_COLUMN_INDEX = 8 if not isFirstYear else 9
+    DIVISION_COLUMN_INDEX = 8
 
     table_body = table.find('tbody') or table
 
@@ -60,12 +81,25 @@ def scrape_course_data(html_content, isFirstYear):
         if not department:
             print("Department is empty, skipping....")
             continue
+        
+        if isFirstYear:
+            if department not in departments_names_to_divisions:
+                print(f"Unknown department '{department}', skipping...")
+                continue
+
+            division = departments_names_to_divisions[department]
+            division_asc = cols[DIVISION_COLUMN_INDEX].get_text(strip=True)
+            if division != division_asc:
+                # print(f"Division mismatch for {department}: {division} != {division_asc}, skipping...")
+                # break
+                continue
+
 
         code = cols[CODE_COLUMN_INDEX].get_text(strip=True)
         if not code:
             continue
         
-        if department=="Centre for Liberal Education (CLEdu)":
+        if department in departments_to_skip:
             continue
 
         if department not in departments_names_to_codes:
@@ -79,7 +113,6 @@ def scrape_course_data(html_content, isFirstYear):
             department_courses[department] = set()
         department_courses[department].add(code)
 
-    # return {dept: (list(courses)) for dept, courses in department_courses}
     return department_courses
 
 def load_and_scrape_html_file(file_path, semester: int):
@@ -140,9 +173,8 @@ def uploadDataToFireStore(departments_data, semesters):
 
 
 if __name__ == "__main__":
-    semesters= [2, 3, 4, 5, 6, 7, 8]
-    # semesters=[3, 4, 5, 6, 7, 8]
-    # semesters=[3]
+    semesters= [1,  2, 3, 4, 5, 6, 7, 8]
+    # semesters= [1]
 
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     raw_base = os.path.join(base_dir, "api", "v1", "endpoints", "department_courses_raw")
@@ -171,7 +203,7 @@ if __name__ == "__main__":
             # all_semester_courses.append((load_and_scrape_html_file(html_file_path)))
         
         if all_semester_courses:
-            print(f"SEMESTER{semester}: ",all_semester_courses)
+            # print(f"SEMESTER{semester}: ",all_semester_courses)
             scraped_data.append(all_semester_courses)
         else:
             print(f"No course data found for in semester {semester}")
